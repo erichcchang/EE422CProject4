@@ -9,8 +9,11 @@ package assignment4;
  * Spring 2017
  */
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.io.*;
+import java.lang.reflect.Method;
 
 
 /*
@@ -70,10 +73,10 @@ public class Main {
         // stage 1,2 initialize 
         try {
         	for (int i = 0; i < 100; i++) {      				
-    			Critter.makeCritter("Algae");
+    			Critter.makeCritter(myPackage + "." + "Algae");
     		}
-            for (int i = 0; i < 100; i++) {      				
-    			Critter.makeCritter("Craig");
+            for (int i = 0; i < 25; i++) {      				
+    			Critter.makeCritter(myPackage + "." + "Craig");
     		}
         }
         catch (Exception e) {
@@ -127,11 +130,11 @@ public class Main {
             		if (parse.length == 3) {
             			int count = Integer.parseInt(parse[2]);
             			for (int i = 0; i < count; i++) {      				
-            				Critter.makeCritter(parse[1]);
+            				Critter.makeCritter(myPackage + "." + parse[1]);
             			}
             		}
             		else if (parse.length == 2) {
-            			Critter.makeCritter(parse[1]);
+            			Critter.makeCritter(myPackage + "." + parse[1]);
             		}
             		else {
             			throw new IllegalArgumentException();
@@ -139,7 +142,15 @@ public class Main {
             		
             	}
             	else if (parse[0].equals("stats")) {
-            		// implement later
+            		if (parse.length == 2) {
+            			List<Critter> list = Critter.getInstances(myPackage + "." + parse[1]);
+                		Class<?> passCritter = Class.forName(myPackage + "." + parse[1]);
+                		Method stats = passCritter.getMethod("runStats", List.class);
+                		stats.invoke(null, list);
+            		}
+            		else {
+            			throw new IllegalArgumentException();
+            		}
             	}
             	else {
             		throw new Exception();

@@ -158,8 +158,8 @@ public abstract class Critter {
 	 */
 	public static void makeCritter(String critter_class_name) throws InvalidCritterException {
 		try{
-			Class<?> passCritter = Class.forName( myPackage + "." + critter_class_name);
-			Critter newCritter = (Critter) passCritter.getConstructor().newInstance();
+			Class<?> passCritter = Class.forName(critter_class_name);
+			Critter newCritter = (Critter)passCritter.getConstructor().newInstance();
 			newCritter.x_coord = Critter.getRandomInt(Params.world_width);
 			newCritter.y_coord = Critter.getRandomInt(Params.world_height);
 			newCritter.energy = Params.start_energy;
@@ -177,9 +177,19 @@ public abstract class Critter {
 	 * @throws InvalidCritterException
 	 */
 	public static List<Critter> getInstances(String critter_class_name) throws InvalidCritterException {
-		List<Critter> result = new java.util.ArrayList<Critter>();
-		
-		return result;
+		try {			
+			List<Critter> result = new java.util.ArrayList<Critter>();
+			Class<?> critterClass = Class.forName(critter_class_name);
+			for (Critter current : population) {			
+				if (critterClass.isInstance(current)) {
+					result.add(current);
+				}
+			}
+			return result;
+		}
+		catch (Exception e) {
+			throw new InvalidCritterException(critter_class_name);
+		}		
 	}
 	
 	/**
@@ -301,13 +311,13 @@ public abstract class Critter {
 				}
 				if (firstChance > secondChance) {
 					first.energy = second.energy /2;
-					population.remove(second);
 					current.remove(second);
+					population.remove(second);				
 				}
 				else {
 					second.energy = first.energy /2;
-					population.remove(first);
 					current.remove(first);
+					population.remove(first);			
 				}
 			}
 			map.remove(0);
@@ -321,9 +331,16 @@ public abstract class Critter {
 		
 		
 		// generate algae 
+		for (int i = 0; i < Params.refresh_algae_count; i++) {      				
+			Algae newAlgae = new Algae();		
+			newAlgae.setX_coord(Critter.getRandomInt(Params.world_width));
+			newAlgae.setY_coord(Critter.getRandomInt(Params.world_height));
+			newAlgae.setEnergy(Params.start_energy);
+			population.add(newAlgae);
+		}
+		// resolve encounters
 		
-		
-		// add babies to collection add to pop
+		// add babies
 		population.addAll(babies);
 		babies.clear();
 		
@@ -343,7 +360,13 @@ public abstract class Critter {
 	public static void displayWorld() {
 		Critter [] map = new Critter[Params.world_height*Params.world_width];
 		for (Critter current : population) {
-			map[current.y_coord * Params.world_width + current.x_coord] = current;
+			if (map[current.y_coord * Params.world_width + current.x_coord] == null) {
+				map[current.y_coord * Params.world_width + current.x_coord] = current;
+			}
+			else {
+				// error: conflicts were not correctly resolved
+				double a;
+			}
 		}
 		
 		System.out.print("+");
