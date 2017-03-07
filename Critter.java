@@ -389,72 +389,11 @@ public abstract class Critter {
 			}
 		}
 		
-		// resolve encounters
-
+		// resolve Encounters
 		for (int i = 0; i < map.size(); i++) {
-			ArrayList<Critter> current = map.get(i);
-			while (current.size() > 1) {
-				Critter first = current.get(0);
-				Critter second = current.get(1);
-				int firstChance, secondChance;
-				int firstIndex = population.indexOf(first);
-				int secondIndex = population.indexOf(second);		
-				// account for critters that move while fighting
-				int first_x = first.x_coord;
-				int first_y = first.y_coord;
-				int second_x = second.x_coord;
-				int second_y = second.y_coord;
-				if (first.fight(second.toString())) {
-					firstChance = Critter.getRandomInt(first.energy + 1);
-				}
-				else {
-					firstChance = 0;
-				}
-				if (second.fight(first.toString())) {
-					secondChance = Critter.getRandomInt(second.energy + 1);
-				}
-				else {
-					secondChance = 0;
-				}
-				// if critters die from fighting
-				if (first.energy <= 0 || second.energy <= 0) {
-					if (first.energy <= 0) {
-						current.remove(first);
-						population.remove(firstIndex);
-						hasMoved.remove(firstIndex);
-					}
-					if (second.energy <= 0) {
-						current.remove(second);
-						population.remove(secondIndex);
-						hasMoved.remove(secondIndex);
-					}
-				}
-				// if critters flee from fighting
-				else if (first_x != first.x_coord || first_y != first.y_coord || second_x != second.x_coord || second_y != second.y_coord) {
-					if (first_x != first.x_coord || first_y != first.y_coord) {
-						current.remove(first);
-					}
-					if (second_x != second.x_coord || second_y != second.y_coord) {
-						current.remove(second);
-					}
-				}
-				// fight
-				else if (firstChance > secondChance) {
-					first.energy += (second.energy + 1)/2;
-					current.remove(second);
-					population.remove(secondIndex);
-					hasMoved.remove(secondIndex);
-					
-				}
-				else {
-					second.energy += (first.energy + 1)/2;
-					current.remove(first);
-					population.remove(firstIndex);
-					hasMoved.remove(firstIndex);			
-				}
-			}
+			resolveEncounters(map.get(i)); // at each point on grid
 		}
-		
+			
 		
 		// update rest energy, remove resulting dead critters
 		int j = 0;
@@ -472,21 +411,33 @@ public abstract class Critter {
 		
 		// generate algae 
 		for (int i = 0; i < Params.refresh_algae_count; i++) {      				
-			Algae newAlgae = new Algae();		
-			newAlgae.setX_coord(Critter.getRandomInt(Params.world_width));
-			newAlgae.setY_coord(Critter.getRandomInt(Params.world_height));
+			Algae newAlgae = new Algae();
+			int x = Critter.getRandomInt(Params.world_width);
+			int y = Critter.getRandomInt(Params.world_height);
+			newAlgae.setX_coord(x);
+			newAlgae.setY_coord(y);
 			newAlgae.setEnergy(Params.start_energy);
 			population.add(newAlgae);
 			hasMoved.add(false);
+			map.get(y * Params.world_width + x).add(newAlgae);
 		}
-		// resolve algae encounters
 		
-		
+		// resolve algae encounters and reset map
+		for (int i = 0; i < map.size(); i++) {
+			ArrayList<Critter> current = map.get(i);
+			resolveEncounters(current); // at each point on grid
+			if (current.size() == 1) {
+				current.remove(0);
+			}
+			if (current.size() > 1) {
+				System.out.print("Error: conflicts were not correctly resolved");
+			}
+		}
 		
 		// reset movement flags
 		for (int i = 0; i < hasMoved.size(); i++) {
 			hasMoved.set(i, false);
-		}
+		}	
 		
 		// add babies
 		population.addAll(babies);
@@ -494,6 +445,69 @@ public abstract class Critter {
 			hasMoved.add(false);
 		}
 		babies.clear();
+	}
+	
+	private static void resolveEncounters (ArrayList<Critter> current) {
+		while (current.size() > 1) {
+			Critter first = current.get(0);
+			Critter second = current.get(1);
+			int firstChance, secondChance;
+			int firstIndex = population.indexOf(first);
+			int secondIndex = population.indexOf(second);		
+			// account for critters that move while fighting
+			int first_x = first.x_coord;
+			int first_y = first.y_coord;
+			int second_x = second.x_coord;
+			int second_y = second.y_coord;
+			if (first.fight(second.toString())) {
+				firstChance = Critter.getRandomInt(first.energy + 1);
+			}
+			else {
+				firstChance = 0;
+			}
+			if (second.fight(first.toString())) {
+				secondChance = Critter.getRandomInt(second.energy + 1);
+			}
+			else {
+				secondChance = 0;
+			}
+			// if critters die from fighting
+			if (first.energy <= 0 || second.energy <= 0) {
+				if (first.energy <= 0) {
+					current.remove(first);
+					population.remove(firstIndex);
+					hasMoved.remove(firstIndex);
+				}
+				if (second.energy <= 0) {
+					current.remove(second);
+					population.remove(secondIndex);
+					hasMoved.remove(secondIndex);
+				}
+			}
+			// if critters flee from fighting
+			else if (first_x != first.x_coord || first_y != first.y_coord || second_x != second.x_coord || second_y != second.y_coord) {
+				if (first_x != first.x_coord || first_y != first.y_coord) {
+					current.remove(first);
+				}
+				if (second_x != second.x_coord || second_y != second.y_coord) {
+					current.remove(second);
+				}
+			}
+			// fight
+			else if (firstChance > secondChance) {
+				first.energy += (second.energy + 1)/2;
+				current.remove(second);
+				population.remove(secondIndex);
+				hasMoved.remove(secondIndex);
+				
+			}
+			else {
+				second.energy += (first.energy + 1)/2;
+				current.remove(first);
+				population.remove(firstIndex);
+				hasMoved.remove(firstIndex);			
+			}
+		}
 	}
 	
 	public static void displayWorld() {
