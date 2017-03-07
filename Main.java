@@ -70,19 +70,6 @@ public class Main {
         /* Do not alter the code above for your submission. */
         /* Write your code below. */
         
-        // stage 1,2 initialize 
-        try {
-        	for (int i = 0; i < 100; i++) {      				
-    			Critter.makeCritter(myPackage + "." + "Algae");
-    		}
-            for (int i = 0; i < 25; i++) {      				
-    			Critter.makeCritter(myPackage + "." + "Craig");
-    		}
-        }
-        catch (Exception e) {
-        	System.out.println("cannot initialize world");
-        }
-        
         System.out.print("critters>");
         String line = kb.nextLine();
         String[] parse = line.split(" ");

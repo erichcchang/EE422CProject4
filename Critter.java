@@ -24,8 +24,9 @@ import java.util.Random;
 public abstract class Critter {
 	private static String myPackage;
 	private	static List<Critter> population = new java.util.ArrayList<Critter>();
-	private static List<Critter> babies = new java.util.ArrayList<Critter>();	
-	//private static List<Critter> world = new java.util.ArrayList<Critter>();
+	private static List<Critter> babies = new java.util.ArrayList<Critter>();
+	private static List<Boolean> hasMoved = new java.util.ArrayList<Boolean>();
+
 
 	// Gets the package name.  This assumes that Critter and its subclasses are all in the same package.
 	static {
@@ -52,60 +53,66 @@ public abstract class Critter {
 	private int y_coord;
 	
 	protected final void walk(int direction) {
-		// if w/ run called more than twice only change energy
-		if (direction == 0 || direction == 1 || direction == 7) {
-			x_coord++;
-		}
-		else if (direction == 3 || direction == 4 || direction == 5) {
-			x_coord--;
-		}
-		if (direction == 1 || direction == 2 || direction == 3) {
-			y_coord++;
-		}
-		else if (direction == 5 || direction == 6 || direction == 7) {
-			y_coord--;
-		}
-		if (x_coord >= Params.world_width) {
-			x_coord -= Params.world_width;
-		}
-		if (x_coord < 0) {
-			x_coord += Params.world_width;
-		}
-		if (y_coord >= Params.world_height) {
-			y_coord -= Params.world_height;
-		}
-		if (y_coord < 0) {
-			y_coord += Params.world_height;
+		int index = population.indexOf(this);
+		if (!hasMoved.get(index)) {
+			if (direction == 0 || direction == 1 || direction == 7) {
+				x_coord++;
+			}
+			else if (direction == 3 || direction == 4 || direction == 5) {
+				x_coord--;
+			}
+			if (direction == 1 || direction == 2 || direction == 3) {
+				y_coord++;
+			}
+			else if (direction == 5 || direction == 6 || direction == 7) {
+				y_coord--;
+			}
+			if (x_coord >= Params.world_width) {
+				x_coord -= Params.world_width;
+			}
+			if (x_coord < 0) {
+				x_coord += Params.world_width;
+			}
+			if (y_coord >= Params.world_height) {
+				y_coord -= Params.world_height;
+			}
+			if (y_coord < 0) {
+				y_coord += Params.world_height;
+			}
+			hasMoved.set(index, true);
 		}
 		energy -= Params.walk_energy_cost;
 	}
 	
 	protected final void run(int direction) {
-		// if w/ walk called more than twice only change energy
-		if (direction == 0 || direction == 1 || direction == 7) {
-			x_coord += 2;
-		}
-		else if (direction == 3 || direction == 4 || direction == 5) {
-			x_coord -= 2;
-		}
-		if (direction == 1 || direction == 2 || direction == 3) {
-			y_coord += 2;
-		}
-		else if (direction == 5 || direction == 6 || direction == 7) {
-			y_coord -= 2;
-		}
-		if (x_coord >= Params.world_width) {
-			x_coord -= Params.world_width;
-		}
-		if (x_coord < 0) {
-			x_coord += Params.world_width;
-		}
-		if (y_coord >= Params.world_height) {
-			y_coord -= Params.world_height;
-		}
-		if (y_coord < 0) {
-			y_coord += Params.world_height;
-		}
+		int index = population.indexOf(this);
+		if (!hasMoved.get(index)) {
+			if (direction == 0 || direction == 1 || direction == 7) {
+				x_coord += 2;
+			}
+			else if (direction == 3 || direction == 4 || direction == 5) {
+				x_coord -= 2;
+			}
+			if (direction == 1 || direction == 2 || direction == 3) {
+				y_coord += 2;
+			}
+			else if (direction == 5 || direction == 6 || direction == 7) {
+				y_coord -= 2;
+			}
+			if (x_coord >= Params.world_width) {
+				x_coord -= Params.world_width;
+			}
+			if (x_coord < 0) {
+				x_coord += Params.world_width;
+			}
+			if (y_coord >= Params.world_height) {
+				y_coord -= Params.world_height;
+			}
+			if (y_coord < 0) {
+				y_coord += Params.world_height;
+			}
+			hasMoved.set(index, true);
+		}	
 		energy -= Params.run_energy_cost;
 	}
 	
@@ -164,6 +171,7 @@ public abstract class Critter {
 			newCritter.y_coord = Critter.getRandomInt(Params.world_height);
 			newCritter.energy = Params.start_energy;
 			population.add(newCritter);
+			hasMoved.add(false);
 		}
 		catch (Exception e) {
 			throw new InvalidCritterException(critter_class_name);
@@ -272,7 +280,10 @@ public abstract class Critter {
 	 * Clear the world of all critters, dead and alive
 	 */
 	public static void clearWorld() {
-		// Complete this method.
+		while (population.size() > 0) {
+			population.remove(0);
+			hasMoved.remove(0);
+		}
 	}
 	
 	public static void worldTimeStep() {
@@ -296,6 +307,22 @@ public abstract class Critter {
 				Critter first = current.get(0);
 				Critter second = current.get(1);
 				int firstChance, secondChance;
+				int firstIndex = population.indexOf(first);
+				int secondIndex = population.indexOf(second);
+				// no conflict if critter is already dead			
+				if (first.energy <= 0 || second.energy <= 0) {
+					if (first.energy <= 0) {
+						current.remove(first);
+						population.remove(firstIndex);
+						hasMoved.remove(firstIndex);
+					}
+					if (second.energy <= 0) {
+						current.remove(second);
+						population.remove(secondIndex);
+						hasMoved.remove(secondIndex);
+					}
+					continue;
+				}
 				// account for critters that move while fighting
 				if (first.fight(second.toString())) {
 					firstChance = Critter.getRandomInt(first.energy + 1);
@@ -310,14 +337,17 @@ public abstract class Critter {
 					secondChance = 0;
 				}
 				if (firstChance > secondChance) {
-					first.energy = second.energy /2;
+					first.energy += (second.energy + 1)/2;
 					current.remove(second);
-					population.remove(second);				
+					population.remove(secondIndex);
+					hasMoved.remove(secondIndex);
+					
 				}
 				else {
-					second.energy = first.energy /2;
+					second.energy += (first.energy + 1)/2;
 					current.remove(first);
-					population.remove(first);			
+					population.remove(firstIndex);
+					hasMoved.remove(firstIndex);			
 				}
 			}
 			map.remove(0);
@@ -337,11 +367,15 @@ public abstract class Critter {
 			newAlgae.setY_coord(Critter.getRandomInt(Params.world_height));
 			newAlgae.setEnergy(Params.start_energy);
 			population.add(newAlgae);
+			hasMoved.add(false);
 		}
 		// resolve encounters
 		
 		// add babies
 		population.addAll(babies);
+		for (int i = 0; i < babies.size(); i++) {
+			hasMoved.add(false);
+		}
 		babies.clear();
 		
 		// remove dead critters
@@ -350,8 +384,10 @@ public abstract class Critter {
 			Critter current = population.get(i);
 			if (current.energy <= 0) {
 				population.remove(i);
+				hasMoved.remove(i);
 			}
 			else {
+				hasMoved.set(i, false); // reset hasMoved flags
 				i++;
 			}
 		}
