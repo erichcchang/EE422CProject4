@@ -25,12 +25,20 @@ public abstract class Critter {
 	private static String myPackage;
 	private	static List<Critter> population = new java.util.ArrayList<Critter>();
 	private static List<Critter> babies = new java.util.ArrayList<Critter>();
-	private static List<Boolean> hasMoved = new java.util.ArrayList<Boolean>();
+	private static List<Boolean> hasMoved = new ArrayList<Boolean>();
+	private static List<ArrayList<Critter>> map = new ArrayList<ArrayList<Critter>>();
 
 
 	// Gets the package name.  This assumes that Critter and its subclasses are all in the same package.
+	// initializes map
 	static {
 		myPackage = Critter.class.getPackage().toString().split(" ")[1];
+		// may not be allowed
+		for (int y = 0; y < Params.world_height; y++) {
+			for (int x = 0; x < Params.world_width; x++) {
+				map.add(new ArrayList<Critter>());
+			}
+		}
 	}
 	
 	private static java.util.Random rand = new java.util.Random();
@@ -53,8 +61,48 @@ public abstract class Critter {
 	private int y_coord;
 	
 	protected final void walk(int direction) {
+		StackTraceElement current = Thread.currentThread().getStackTrace()[2];
 		int index = population.indexOf(this);
-		if (!hasMoved.get(index)) {
+		if (current.getMethodName().equals("fight") && !hasMoved.get(index)) {
+			int x, y;
+			if (direction == 0 || direction == 1 || direction == 7) {
+				x = x_coord + 1;
+			}
+			else if (direction == 3 || direction == 4 || direction == 5) {
+				x = x_coord - 1;
+			}
+			else {
+				x = x_coord;
+			}
+			if (direction == 1 || direction == 2 || direction == 3) {
+				y = y_coord + 1;
+			}
+			else if (direction == 5 || direction == 6 || direction == 7) {
+				y = y_coord - 1;
+			}
+			else {
+				y= y_coord;
+			}
+			if (x >= Params.world_width) {
+				x -= Params.world_width;
+			}
+			if (x < 0) {
+				x += Params.world_width;
+			}
+			if (y >= Params.world_height) {
+				y -= Params.world_height;
+			}
+			if (y < 0) {
+				y += Params.world_height;
+			}
+			if (map.get(y * Params.world_width + x).isEmpty()) {
+				x_coord = x;
+				y_coord = y;
+				hasMoved.set(index, true);
+			}
+
+		}
+		else if (!hasMoved.get(index)) {
 			if (direction == 0 || direction == 1 || direction == 7) {
 				x_coord++;
 			}
@@ -85,8 +133,47 @@ public abstract class Critter {
 	}
 	
 	protected final void run(int direction) {
+		StackTraceElement current = Thread.currentThread().getStackTrace()[2];
 		int index = population.indexOf(this);
-		if (!hasMoved.get(index)) {
+		if (current.getMethodName().equals("fight") && !hasMoved.get(index)) {
+			int x, y;
+			if (direction == 0 || direction == 1 || direction == 7) {
+				x = x_coord + 2;
+			}
+			else if (direction == 3 || direction == 4 || direction == 5) {
+				x = x_coord - 2;
+			}
+			else {
+				x = x_coord;
+			}
+			if (direction == 1 || direction == 2 || direction == 3) {
+				y = y_coord + 2;
+			}
+			else if (direction == 5 || direction == 6 || direction == 7) {
+				y = y_coord - 2;
+			}
+			else {
+				y= y_coord;
+			}
+			if (x >= Params.world_width) {
+				x -= Params.world_width;
+			}
+			if (x < 0) {
+				x += Params.world_width;
+			}
+			if (y >= Params.world_height) {
+				y -= Params.world_height;
+			}
+			if (y < 0) {
+				y += Params.world_height;
+			}
+			if (map.get(y * Params.world_width + x).isEmpty()) {
+				x_coord = x;
+				y_coord = y;
+				hasMoved.set(index, true);
+			}
+		}
+		else if (!hasMoved.get(index)) {
 			if (direction == 0 || direction == 1 || direction == 7) {
 				x_coord += 2;
 			}
@@ -287,43 +374,36 @@ public abstract class Critter {
 	}
 	
 	public static void worldTimeStep() {
-		ArrayList<ArrayList<Critter>> map = new ArrayList<ArrayList<Critter>>();
-		for (int y = 0; y < Params.world_height; y++) {
-			for (int x = 0; x < Params.world_width; x++) {
-				map.add(new ArrayList<Critter>());
+		
+		// simulate individual time steps
+		for (int i = 0; i < population.size(); i++) {
+			Critter current = population.get(i);
+			current.doTimeStep();
+			if (current.energy <= 0) {
+				population.remove(i);
+				hasMoved.remove(i);
+			}
+			else {
+				map.get(current.y_coord * Params.world_width + current.x_coord).add(current);
+				i++;
 			}
 		}
 		
-		// simulate individual time steps
-		for (Critter current : population) {
-			current.doTimeStep(); 
-			map.get(current.y_coord * Params.world_width + current.x_coord).add(current);
-		}
-		
 		// resolve encounters
-		while (map.size() > 0) {
-			ArrayList<Critter> current = map.get(0);
+
+		for (int i = 0; i < map.size(); i++) {
+			ArrayList<Critter> current = map.get(i);
 			while (current.size() > 1) {
 				Critter first = current.get(0);
 				Critter second = current.get(1);
 				int firstChance, secondChance;
 				int firstIndex = population.indexOf(first);
-				int secondIndex = population.indexOf(second);
-				// no conflict if critter is already dead			
-				if (first.energy <= 0 || second.energy <= 0) {
-					if (first.energy <= 0) {
-						current.remove(first);
-						population.remove(firstIndex);
-						hasMoved.remove(firstIndex);
-					}
-					if (second.energy <= 0) {
-						current.remove(second);
-						population.remove(secondIndex);
-						hasMoved.remove(secondIndex);
-					}
-					continue;
-				}
+				int secondIndex = population.indexOf(second);		
 				// account for critters that move while fighting
+				int first_x = first.x_coord;
+				int first_y = first.y_coord;
+				int second_x = second.x_coord;
+				int second_y = second.y_coord;
 				if (first.fight(second.toString())) {
 					firstChance = Critter.getRandomInt(first.energy + 1);
 				}
@@ -336,7 +416,30 @@ public abstract class Critter {
 				else {
 					secondChance = 0;
 				}
-				if (firstChance > secondChance) {
+				// if critters die from fighting
+				if (first.energy <= 0 || second.energy <= 0) {
+					if (first.energy <= 0) {
+						current.remove(first);
+						population.remove(firstIndex);
+						hasMoved.remove(firstIndex);
+					}
+					if (second.energy <= 0) {
+						current.remove(second);
+						population.remove(secondIndex);
+						hasMoved.remove(secondIndex);
+					}
+				}
+				// if critters flee from fighting
+				else if (first_x != first.x_coord || first_y != first.y_coord || second_x != second.x_coord || second_y != second.y_coord) {
+					if (first_x != first.x_coord || first_y != first.y_coord) {
+						current.remove(first);
+					}
+					if (second_x != second.x_coord || second_y != second.y_coord) {
+						current.remove(second);
+					}
+				}
+				// fight
+				else if (firstChance > secondChance) {
 					first.energy += (second.energy + 1)/2;
 					current.remove(second);
 					population.remove(secondIndex);
@@ -350,15 +453,22 @@ public abstract class Critter {
 					hasMoved.remove(firstIndex);			
 				}
 			}
-			map.remove(0);
 		}
 		
 		
-		// update rest energy
-		for (Critter current : population) {
+		// update rest energy, remove resulting dead critters
+		int j = 0;
+		while (j < population.size()) {
+			Critter current = population.get(j);
 			current.energy -= Params.rest_energy_cost;
+			if (current.energy <= 0) {
+				population.remove(j);
+				hasMoved.remove(j);
+			}
+			else {
+				j++;
+			}
 		}
-		
 		
 		// generate algae 
 		for (int i = 0; i < Params.refresh_algae_count; i++) {      				
@@ -369,7 +479,14 @@ public abstract class Critter {
 			population.add(newAlgae);
 			hasMoved.add(false);
 		}
-		// resolve encounters
+		// resolve algae encounters
+		
+		
+		
+		// reset movement flags
+		for (int i = 0; i < hasMoved.size(); i++) {
+			hasMoved.set(i, false);
+		}
 		
 		// add babies
 		population.addAll(babies);
@@ -377,31 +494,16 @@ public abstract class Critter {
 			hasMoved.add(false);
 		}
 		babies.clear();
-		
-		// remove dead critters
-		int i = 0;
-		while (i < population.size()) {
-			Critter current = population.get(i);
-			if (current.energy <= 0) {
-				population.remove(i);
-				hasMoved.remove(i);
-			}
-			else {
-				hasMoved.set(i, false); // reset hasMoved flags
-				i++;
-			}
-		}
 	}
 	
 	public static void displayWorld() {
-		Critter [] map = new Critter[Params.world_height*Params.world_width];
+		Critter [] grid = new Critter[Params.world_height*Params.world_width];
 		for (Critter current : population) {
-			if (map[current.y_coord * Params.world_width + current.x_coord] == null) {
-				map[current.y_coord * Params.world_width + current.x_coord] = current;
+			if (grid[current.y_coord * Params.world_width + current.x_coord] == null) {
+				grid[current.y_coord * Params.world_width + current.x_coord] = current;
 			}
 			else {
-				// error: conflicts were not correctly resolved
-				double a;
+				System.out.println("Error: conflicts were not correctly resolved");
 			}
 		}
 		
@@ -414,7 +516,7 @@ public abstract class Critter {
 		for (int y = 0; y < Params.world_height; y++) {
 			System.out.print("|");
 			for (int x = 0; x < Params.world_width; x++) {
-				Critter current = map[y * Params.world_width + x];
+				Critter current = grid[y * Params.world_width + x];
 				if (current != null) {
 					System.out.print(current);
 				}

@@ -144,6 +144,7 @@ public class Main {
             	}
         	}
         	catch (IllegalArgumentException | InvalidCritterException e) {
+        		e.printStackTrace();
         		System.out.println("error processing: " + line);
         	}
         	catch (Exception e) {
