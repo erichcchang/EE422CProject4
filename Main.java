@@ -144,11 +144,9 @@ public class Main {
             	}
         	}
         	catch (IllegalArgumentException | InvalidCritterException e) {
-        		e.printStackTrace();
         		System.out.println("error processing: " + line);
         	}
         	catch (Exception e) {
-        		e.printStackTrace();
         		System.out.println("invalid command: " + line);
         	}       	
         	System.out.print("critters>");
