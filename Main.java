@@ -1,7 +1,6 @@
 package assignment4;
 /* CRITTERS Main.java
  * EE422C Project 4 submission by
- * Replace <...> with your actual data.
  * Ho-chang Chang
  * hc23882
  * 16220
@@ -9,7 +8,6 @@ package assignment4;
  * Spring 2017
  */
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.io.*;
@@ -83,7 +81,7 @@ public class Main {
             			throw new IllegalArgumentException();
             		}
         		}
-        		if (parse[0].equals("show")) {
+        		else if (parse[0].equals("show")) {
         			if (parse.length == 1) {
         				Critter.displayWorld();
         			}
@@ -94,6 +92,7 @@ public class Main {
             	else if (parse[0].equals("step")) {
             		if (parse.length == 2) {
             			int count = Integer.parseInt(parse[1]);
+            			// may need to throw exception if non-positive
             			for (int i = 0; i < count; i++) {
             				Critter.worldTimeStep();
             			}
@@ -116,12 +115,13 @@ public class Main {
             	else if (parse[0].equals("make")) {
             		if (parse.length == 3) {
             			int count = Integer.parseInt(parse[2]);
+            			// may need to throw exception if non-positive
             			for (int i = 0; i < count; i++) {      				
-            				Critter.makeCritter(myPackage + "." + parse[1]);
+            				Critter.makeCritter(parse[1]);
             			}
             		}
             		else if (parse.length == 2) {
-            			Critter.makeCritter(myPackage + "." + parse[1]);
+            			Critter.makeCritter(parse[1]);
             		}
             		else {
             			throw new IllegalArgumentException();
@@ -129,8 +129,8 @@ public class Main {
             		
             	}
             	else if (parse[0].equals("stats")) {
-            		if (parse.length == 2) {
-            			List<Critter> list = Critter.getInstances(myPackage + "." + parse[1]);
+            		if (parse.length == 2 && !parse[1].equals("Critter")) {
+            			List<Critter> list = Critter.getInstances(parse[1]);
                 		Class<?> passCritter = Class.forName(myPackage + "." + parse[1]);
                 		Method stats = passCritter.getMethod("runStats", List.class);
                 		stats.invoke(null, list);
@@ -148,12 +148,14 @@ public class Main {
         		System.out.println("error processing: " + line);
         	}
         	catch (Exception e) {
+        		e.printStackTrace();
         		System.out.println("invalid command: " + line);
         	}       	
         	System.out.print("critters>");
         	line = kb.nextLine();
         	parse = line.split(" ");
-        }       
+        }    
+        
         /* Write your code above */
         System.out.flush();
 
