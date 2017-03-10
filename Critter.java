@@ -338,7 +338,7 @@ public abstract class Critter {
 	 * Resolves the encounter between the first two critters in the list by removing at least one
 	 * @param an ArrayList of critters with at least two elements
 	 */
-	private static void resolveEncounters (ArrayList<Critter> list) {
+	private static void resolveEncounter (ArrayList<Critter> list) {
 		Critter first = list.get(0);
 		Critter second = list.get(1);
 		int firstChance, secondChance;
@@ -429,7 +429,7 @@ public abstract class Critter {
 		// resolve encounters, remove dead critters
 		for (ArrayList<Critter> list: map) {
 			while (list.size() > 1) {
-				resolveEncounters(list); // for each pair in list
+				resolveEncounter(list); // for each pair in list
 			}
 		}
 		
@@ -464,7 +464,7 @@ public abstract class Critter {
 		// resolve algae encounters, remove dead critters 
 		for (ArrayList<Critter> list: map) {
 			while (list.size() > 1) {
-				resolveEncounters(list); // for each pair in list
+				resolveEncounter(list); // for each pair in list
 			}
 		}
 		
