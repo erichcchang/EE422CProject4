@@ -92,9 +92,13 @@ public class Main {
             	else if (parse[0].equals("step")) {
             		if (parse.length == 2) {
             			int count = Integer.parseInt(parse[1]);
-            			// may need to throw exception if non-positive
-            			for (int i = 0; i < count; i++) {
-            				Critter.worldTimeStep();
+            			if (count < 0) {
+            				throw new IllegalArgumentException();
+            			}
+            			else {
+            				for (int i = 0; i < count; i++) {
+                				Critter.worldTimeStep();
+                			}
             			}
             		}
             		else if (parse.length == 1) {
@@ -115,10 +119,14 @@ public class Main {
             	else if (parse[0].equals("make")) {
             		if (parse.length == 3) {
             			int count = Integer.parseInt(parse[2]);
-            			// may need to throw exception if non-positive
-            			for (int i = 0; i < count; i++) {      				
-            				Critter.makeCritter(parse[1]);
+            			if (count < 0) {
+            				throw new IllegalArgumentException();
             			}
+            			else {
+            				for (int i = 0; i < count; i++) {      				
+                				Critter.makeCritter(parse[1]);
+                			}
+            			}		
             		}
             		else if (parse.length == 2) {
             			Critter.makeCritter(parse[1]);

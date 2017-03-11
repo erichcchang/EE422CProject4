@@ -56,6 +56,11 @@ public abstract class Critter {
 	private int x_coord;
 	private int y_coord;
 	
+	/**
+	 * moves the critter speed tiles away from current in the specified direction
+	 * @param speed - 1 is walk, 2 is run
+	 * @param direction 0-7 integer where 0 is east, 2 is north, 4 is west, 6 is south
+	 */
 	private void move(int speed, int direction) {
 		StackTraceElement current = Thread.currentThread().getStackTrace()[3];
 		int index = population.indexOf(this);
@@ -80,15 +85,17 @@ public abstract class Critter {
 				y= y_coord;
 			}
 			if (x >= Params.world_width) {
-				x -= Params.world_width;
+				x %= Params.world_width;
 			}
-			if (x < 0) {
+			else if (x < 0) {
+				x %= Params.world_width;
 				x += Params.world_width;
 			}
 			if (y >= Params.world_height) {
-				y -= Params.world_height;
+				y %= Params.world_height;
 			}
-			if (y < 0) {
+			else if (y < 0) {
+				y %= Params.world_height;
 				y += Params.world_height;
 			}
 			if (map.get(y * Params.world_width + x).size() == 0) {
@@ -113,15 +120,17 @@ public abstract class Critter {
 				y_coord -= speed;
 			}
 			if (x_coord >= Params.world_width) {
-				x_coord -= Params.world_width;
+				x_coord %= Params.world_width;
 			}
-			if (x_coord < 0) {
+			else if (x_coord < 0) {
+				x_coord %= Params.world_width;
 				x_coord += Params.world_width;
 			}
 			if (y_coord >= Params.world_height) {
-				y_coord -= Params.world_height;
+				y_coord %= Params.world_height;
 			}
-			if (y_coord < 0) {
+			else if (y_coord < 0) {
+				y_coord %= Params.world_height;
 				y_coord += Params.world_height;
 			}
 			hasMoved.set(index, true);
@@ -134,19 +143,32 @@ public abstract class Critter {
 			energy -= Params.run_energy_cost;
 		}
 	}
+	
+	/**
+	 * calls move with speed 1
+	 * @param direction - direction of movement
+	 */
 	protected final void walk(int direction) {
+		// can only be called from doTimeStep or fight
 		move(1, direction);
 	}
 	
+	/**
+	 * calls move with speed 2
+	 * @param direction - direction of movement
+	 */
 	protected final void run(int direction) {
+		// can only be called from doTimeStep or fight
 		move(2, direction);
 	}
 	
 	/**
 	 * sets the coordinates and energy of the new critter offspring and buffers it in the list babies
-	 * @param an already created Critter to set
+	 * @param offspring - an already created Critter to set
+	 * @param direction - 0-7 direction indicating adjacent tile at which to place offspring
 	 */
 	protected final void reproduce(Critter offspring, int direction) {
+		// can only be called from doTimeStep or fight
 		if (energy >= Params.min_reproduce_energy) {
 			offspring.energy = energy / 2;
 			energy -= offspring.energy;
@@ -165,15 +187,19 @@ public abstract class Critter {
 				offspring.y_coord--;
 			}
 			if (offspring.x_coord >= Params.world_width) {
-				offspring.x_coord -= Params.world_width;
+				offspring.x_coord %= Params.world_width;
 			}
-			if (offspring.x_coord < 0) {
+			else if (offspring.x_coord < 0) {
+				offspring.x_coord %= Params.world_width;
 				offspring.x_coord += Params.world_width;
+				
 			}
 			if (offspring.y_coord >= Params.world_height) {
-				offspring.y_coord -= Params.world_height;
+				offspring.y_coord %= Params.world_height;
+				
 			}
-			if (offspring.y_coord < 0) {
+			else if (offspring.y_coord < 0) {
+				offspring.y_coord %= Params.world_height;
 				offspring.y_coord += Params.world_height;
 			}
 			babies.add(offspring);
@@ -320,15 +346,12 @@ public abstract class Critter {
 	 * Resolves the encounter between the first two critters in the list by removing at least one
 	 * @param an ArrayList of critters with at least two elements
 	 */
-	private static void resolveEncounters (ArrayList<Critter> list) {
+	private static void resolveEncounter (ArrayList<Critter> list) {
 		Critter first = list.get(0);
 		Critter second = list.get(1);
 		int firstChance, secondChance;
 		int firstIndex = population.indexOf(first);
 		int secondIndex = population.indexOf(second);
-		if (firstIndex == -1 || secondIndex == -1) {
-			System.out.println("Error");
-		}
 		// account for critters that move while fighting
 		int first_x = first.x_coord;
 		int first_y = first.y_coord;
@@ -414,7 +437,7 @@ public abstract class Critter {
 		// resolve encounters, remove dead critters
 		for (ArrayList<Critter> list: map) {
 			while (list.size() > 1) {
-				resolveEncounters(list); // for each pair in list
+				resolveEncounter(list); // for each pair in list
 			}
 		}
 		
@@ -449,7 +472,7 @@ public abstract class Critter {
 		// resolve algae encounters, remove dead critters 
 		for (ArrayList<Critter> list: map) {
 			while (list.size() > 1) {
-				resolveEncounters(list); // for each pair in list
+				resolveEncounter(list); // for each pair in list
 			}
 		}
 		
